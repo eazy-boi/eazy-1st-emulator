@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eazy Stack</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="emulator">
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="status-left">
+        <div class="signal">◐</div>
+        <div class="wifi">◌</div>
+      </div>
+      <div class="status-center">
+        <div class="time" id="statusTime">12:00</div>
+        <div class="date" id="statusDate">Mon, Jan 1</div>
+      </div>
+      <div class="status-right">
+        <div class="battery">🔋</div>
+        <div class="notify" id="btnNotify">▾</div>
+      </div>
+    </div>
+
+    <!-- Main screen area -->
+    <div class="screen">
+      <!-- Home screen -->
+      <div class="screen-view active" id="view-home">
+        <div class="search-bar">
+          <input type="text" id="homeSearch" placeholder="Search apps..." />
+        </div>
+        <div class="app-grid" id="appGrid"></div>
+      </div>
+
+      <!-- App drawer -->
+      <div class="screen-view" id="view-app-drawer">
+        <div class="drawer-header">
+          <input type="text" id="drawerSearch" placeholder="Search apps..." />
+          <div class="drawer-tabs">
+            <div class="drawer-tab active" data-sort="alpha">A-Z</div>
+            <div class="drawer-tab" data-sort="recent">Recent</div>
+          </div>
+        </div>
+        <div class="app-grid" id="appDrawerGrid"></div>
+      </div>
+
+      <!-- Recent apps -->
+      <div class="screen-view" id="view-recent">
+        <div class="page-header">
+          <button class="btn-back" id="btnBackFromRecent">‹</button>
+          <h1>Recent Apps</h1>
+          <button class="btn-clear" id="btnClearRecent">Clear All</button>
+        </div>
+        <div class="recent-grid" id="recentGrid"></div>
+      </div>
+
+      <!-- Notification panel -->
+      <div class="screen-view" id="view-notify">
+        <div class="notify-header">
+          <button class="btn-back" id="btnBackFromNotify">‹</button>
+          <h1>Notifications & Quick Settings</h1>
+        </div>
+        <div class="quick-settings">
+          <div class="qs-item">
+            <div class="qs-icon" id="qsWifi">📶</div>
+            <span>Wi-Fi</span>
+          </div>
+          <div class="qs-item">
+            <div class="qs-icon" id="qsBt">🔘</div>
+            <span>Bluetooth</span>
+          </div>
+          <div class="qs-item">
+            <div class="qs-icon" id="qsSound">🔊</div>
+            <span>Sound</span>
+          </div>
+          <div class="qs-item">
+            <div class="qs-icon" id="qsRotate">🔄</div>
+            <span>Rotate</span>
+          </div>
+        </div>
+        <div class="notify-list" id="notifyList">
+          <div class="notify-item">
+            <div class="notify-icon">📱</div>
+            <div class="notify-content">
+              <div class="notify-title">Eazy Stack</div>
+              <div class="notify-text">App store updated</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App detail -->
+      <div class="screen-view" id="view-app-detail">
+        <div class="app-detail-header">
+          <button class="btn-back" id="btnBackFromDetail">‹</button>
+          <div class="app-detail-icon"><div class="detail-icon" id="detailIcon">📱</div></div>
+          <div class="app-detail-info">
+            <h1 id="detailName">App Name</h1>
+            <div class="detail-meta">
+              <span id="detailCategory">Category</span>
+              <span class="dot">·</span>
+              <span id="detailRating">4.5</span>★
+              <span class="dot">·</span>
+              <span id="detailSize">12 MB</span>
+            </div>
+            <p id="detailDescription">App description...</p>
+            <div class="detail-actions">
+              <button class="btn-get" id="btnInstallDetail">Get</button>
+              <button class="btn-share" id="btnShareDetail">Share</button>
+            </div>
+            <div class="detail-screenshots" id="detailScreenshots"></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h2>Information</h2>
+          <div class="info-row"><span>Seller</span><span id="detailSeller">Eazy Stack</span></div>
+          <div class="info-row"><span>Size</span><span id="detailSize2">12 MB</span></div>
+          <div class="info-row"><span>Category</span><span id="detailCategory2">Entertainment</span></div>
+          <div class="info-row"><span>Age Rating</span><span>12+</span></div>
+        </div>
+        <div class="detail-section">
+          <h2>Ratings & Reviews</h2>
+          <div class="review-stars">4.5 ★</div>
+          <div class="review-list" id="reviewList"></div>
+        </div>
+      </div>
+
+      <!-- App Store -->
+      <div class="screen-view" id="view-store">
+        <div class="page-header">
+          <h1>App Store</h1>
+          <div class="store-search-wrap">
+            <input type="text" id="storeSearch" placeholder="Search apps & games..." />
+          </div>
+        </div>
+        <div class="store-section">
+          <div class="section-header">Featured</div>
+          <div class="featured-grid" id="featuredGrid"></div>
+        </div>
+        <div class="store-section">
+          <div class="section-header">Top Charts</div>
+          <div class="chart-list" id="chartList"></div>
+        </div>
+        <div class="store-section">
+          <div class="section-header">Categories</div>
+          <div class="category-grid" id="categoryGrid"></div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="screen-view" id="view-settings">
+        <div class="page-header">
+          <button class="btn-back" id="btnBackFromSettings">‹</button>
+          <h1>Settings</h1>
+        </div>
+        <div class="settings-list">
+          <div class="setting-item">
+            <span>Theme</span>
+            <select id="settingTheme"><option value="dark">Dark</option><option value="light">Light</option></select>
+          </div>
+          <div class="setting-item">
+            <span>Launch Mode</span>
+            <select id="settingLaunch"><option value="local-first">Local First</option><option value="web-first">Web First</option></select>
+          </div>
+          <div class="setting-item">
+            <span>App Store</span>
+            <button class="btn-nav" id="btnGoStore">Open Store</button>
+          </div>
+          <div class="setting-item">
+            <span>Reset Data</span>
+            <button class="btn-reset" id="btnResetData">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Updates -->
+      <div class="screen-view" id="view-updates">
+        <div class="page-header">
+          <button class="btn-back" id="btnBackFromUpdates">‹</button>
+          <h1>Updates</h1>
+        </div>
+        <div class="updates-list" id="updatesList"></div>
+        <button class="btn-update-all" id="btnUpdateAll">Update All</button>
+      </div>
+
+      <!-- Embedded app runner -->
+      <div class="screen-view app-runner" id="view-app-runner">
+        <div class="runner-header">
+          <button class="btn-back" id="btnCloseRunner">‹ Close</button>
+          <div class="runner-app-info">
+            <div class="runner-app-icon" id="runnerAppIcon">📱</div>
+            <h1 id="runnerAppName">App</h1>
+          </div>
+          <button class="btn-newtab" id="btnRunnerOpenNew">New Tab</button>
+        </div>
+        <div class="runner-frame-wrap" id="runnerFrameWrap"></div>
+        <div class="runner-controls">
+          <button class="btn-runner" id="btnRunnerBack">◀</button>
+          <button class="btn-runner" id="btnRunnerForward">▶</button>
+          <button class="btn-runner" id="btnRunnerRefresh">⟳</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Android-style taskbar -->
+    <div class="taskbar">
+      <button class="task-btn task-back" id="taskBack">↩</button>
+      <button class="task-btn task-home active" id="taskHome">⭕</button>
+      <button class="task-btn task-recent" id="taskRecent">▭</button>
+      <div class="task-apps">
+        <div class="task-app" data-view="home">📱</div>
+        <div class="task-app" data-view="store">🛒</div>
+        <div class="task-app" data-view="settings">⚙️</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
