@@ -1,11 +1,96 @@
-const electron = require('electron');
+﻿const electron = require('electron');
 const path = require('path');
-const { exec } = require('child_process');
+const { exec ,spawn} = require('child_process');
 const fs = require('fs');
 
 const { app, BrowserWindow, shell, ipcMain } = electron;
 
 let mainWindow = null;
+// Android emulator configuration
+const emulatorPath = path.join(
+  process.env.LOCALAPPDATA,
+  'Android',
+  'Sdk',
+  'emulator',
+  'emulator.exe'
+);
+
+const adbPath = path.join(
+  process.env.LOCALAPPDATA,
+  'Android',
+  'Sdk',
+  'platform-tools',
+  'adb.exe'
+);
+
+let emulatorProcess = null;
+let isQuitting = false;
+
+function startAndroidEmulator() {
+  if (emulatorProcess) return;
+
+  if (!fs.existsSync(emulatorPath) || !fs.existsSync(adbPath)) {
+    console.error('Android emulator or ADB not found.');
+    return;
+  }
+
+  // Check whether an emulator is already running.
+// Use ADB's device list synchronously for a reliable check.
+  const { execFileSync } = require('child_process');
+  let devices = '';
+
+  try {
+    devices = execFileSync(adbPath, ['devices'], { encoding: 'utf8' });
+  } catch (error) {
+    console.error('Could not check Android devices:', error);
+    return;
+  }
+
+  if (/^emulator-\d+\s+device$/m.test(devices)) {
+    console.log('An Android emulator is already running. Eazy Stack will not start another.');
+    return;
+  }
+
+  emulatorProcess = spawn(
+    emulatorPath,
+    ['-avd', 'EazyStack_Android16', '-port', '5554', '-camera-front', 'webcam0', '-camera-back', 'webcam0'],
+    { stdio: 'ignore', windowsHide: false }
+  );
+
+  emulatorProcess.on('error', (error) => {
+    console.error('Emulator startup failed:', error);
+    emulatorProcess = null;
+  });
+
+  emulatorProcess.on('exit', () => {
+    emulatorProcess = null;
+  });
+
+  console.log('Eazy Stack started its Android emulator.');
+}
+
+function stopAndroidEmulator() {
+  return new Promise((resolve) => {
+    if (!emulatorProcess) {
+      resolve();
+      return;
+    }
+
+    exec(
+      `"${adbPath}" -s emulator-5554 emu kill`,
+      (error) => {
+        if (error) {
+          console.error('Normal emulator shutdown failed:', error);
+        } else {
+          console.log('Eazy Stack emulator shut down normally.');
+        }
+
+        emulatorProcess = null;
+        resolve();
+      }
+    );
+  });
+}
 
 ipcMain.handle('open-external', async (event, url) => {
   return shell.openExternal(url);
@@ -30,6 +115,44 @@ ipcMain.handle('launch-local-app', async (event, appObj) => {
     });
   });
 });
+
+const androidPackages = new Set([
+  'com.android.camera2',
+  'com.android.chrome',
+  'com.google.android.apps.messaging',
+  'com.google.android.contacts',
+  'com.google.android.calendar',
+  'com.android.deskclock',
+  'com.google.android.apps.photos'
+]);
+
+ipcMain.handle('launch-android-app', async (event, packageName) => {
+  if (!androidPackages.has(packageName)) {
+    throw new Error('Android app is not approved for launching.');
+  }
+
+  if (!fs.existsSync(adbPath)) {
+    throw new Error('Android ADB was not found.');
+  }
+
+  return new Promise((resolve, reject) => {
+    const { execFile } = require('child_process');
+
+    execFile(
+      adbPath,
+      ['-s', 'emulator-5554', 'shell', 'monkey', '-p', packageName, '1'],
+      { windowsHide: true, timeout: 15000 },
+      (error, stdout, stderr) => {
+        if (error) {
+          reject(new Error(`Could not open Android app: ${stderr || error.message}`));
+        } else {
+          resolve(stdout);
+        }
+      }
+    );
+  });
+});
+
 
 ipcMain.handle('scan-local-apps', async () => {
   if (process.platform !== 'win32') return [];
@@ -57,7 +180,7 @@ ipcMain.handle('scan-local-apps', async () => {
             found.push({
               name: entry.name.replace('.exe', ''),
               command: full,
-              icon: '📱',
+              icon: 'ðŸ“±',
               category: 'System',
               rating: 4,
               size: 'Unknown',
@@ -82,6 +205,8 @@ ipcMain.handle('set-window-size', async (event, size) => {
 });
 
 
+ 
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 430,
@@ -99,45 +224,47 @@ function createWindow() {
     show: false
   });
 
-  // Save the window reference
+  // Keep the global reference
   mainWindow = win;
 
-  // Show window when ready
+  // Display the window when ready
   win.once('ready-to-show', () => {
     win.show();
   });
 
-  // Open Developer Tools
+  // Open Developer Tools for debugging
   win.webContents.openDevTools({ mode: 'detach' });
 
-  // Capture renderer errors
-  win.webContents.on('console-message', (event, details) => {
+  // Log JavaScript errors
+    win.webContents.on('console-message', (event, details) => {
     if (details.level >= 2) {
       console.error('[Renderer error]', details.message);
     }
   });
 
-  // Detect loading errors
-  win.webContents.on('did-fail-load', (event, code, description) => {
-    console.error('[Page load failed]', code, description);
-  });
-
-  // Load Eazy Stack
+  // Load Eazy Stack's HTML
   win.loadFile(path.join(__dirname, 'index.html'))
     .catch(error => {
-      console.error('[HTML loading error]', error);
+      console.error('Could not load index.html:', error);
     });
 
   win.setMenu(null);
 }
+app.whenReady().then(() => {
+  createWindow();
+  startAndroidEmulator();
+});
 
+app.on('before-quit', (event) => {
+  if (isQuitting) return;
 
- 
+  event.preventDefault();
+  isQuitting = true;
 
-  
-
-
-app.whenReady().then(createWindow);
+  stopAndroidEmulator().finally(() => {
+    app.quit();
+  });
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
@@ -146,3 +273,6 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
+
+
+

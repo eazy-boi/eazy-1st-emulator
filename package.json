@@ -4,8 +4,10 @@
   "description": "Eazy Stack - Android emulator desktop app clone",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "build": "electron-builder"
+  "start": "\"%LOCALAPPDATA%\\Android\\Sdk\\emulator\\emulator.exe\" -avd EazyStack_Android16 -camera-front webcam0 -camera-back webcam0",
+  "eazy": "electron .",
+  "build": "electron-builder"
+
   },
   "devDependencies": {
     "electron": "^45.4.1",

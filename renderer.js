@@ -246,27 +246,51 @@ function showLocalAppPlaceholder(app) {
   document.getElementById('runnerAppIcon').textContent = app.icon;
 }
 
+
+
 async function launchApp(app) {
+  // Eazy Stack internal Settings
+  if (app.name === 'Settings') {
+    addToRecent(app);
+    renderRecent();
+    switchView('settings');
+    return;
+  }
+
   addToRecent(app);
   renderRecent();
 
-  const runnerView = document.getElementById('view-app-runner');
   const runnerFrame = document.getElementById('runnerFrame');
   const runnerName = document.getElementById('runnerAppName');
   const runnerIcon = document.getElementById('runnerAppIcon');
 
-  if (app.type === 'local' || app.local) {
-    if (hasElectron && window.eazyApi.launchLocalApp) {
-      try {
-        await window.eazyApi.launchLocalApp(app);
-        return;
-      } catch (e) {}
+
+  // Launch genuine Android applications inside Eazy Stack
+  const androidAppPackages = {
+    'Camera': 'com.android.camera2',
+    'Chrome': 'com.android.chrome',
+    'Messages': 'com.google.android.apps.messaging',
+    'Contacts': 'com.google.android.contacts',
+    'Calendar': 'com.google.android.calendar',
+    'Clock': 'com.android.deskclock',
+    'Photos': 'com.google.android.apps.photos'
+  };
+
+  const androidPackage = androidAppPackages[app.name];
+
+  if (androidPackage && hasElectron && window.eazyApi?.launchAndroidApp) {
+    try {
+      await window.eazyApi.launchAndroidApp(androidPackage);
+      return;
+    } catch (error) {
+      console.error('Android app launch failed:', error);
+      showToast('Could not open ' + app.name + ' in Android');
+      return;
     }
-    showLocalAppPlaceholder(app);
-    switchView('app-runner');
-    return;
   }
 
+
+  // Open web apps inside Eazy Stack first
   if (app.url) {
     runnerName.textContent = app.name;
     runnerIcon.textContent = app.icon;
@@ -275,9 +299,25 @@ async function launchApp(app) {
     return;
   }
 
-  if (app.name === 'Settings') { switchView('settings'); return; }
-  showToast(app.name + ' has no target');
+  // Launch genuine local desktop applications
+  if (app.type === 'local' || app.local) {
+    if (hasElectron && window.eazyApi.launchLocalApp) {
+      try {
+        await window.eazyApi.launchLocalApp(app);
+        return;
+      } catch (e) {
+        console.error('App launch failed:', e);
+      }
+    }
+
+    showLocalAppPlaceholder(app);
+    switchView('app-runner');
+    return;
+  }
+
+  showToast(app.name + ' has no target yet');
 }
+
 
 function uninstallApp(name) {
   apps = apps.map(a => a.name === name ? { ...a, installed: false } : a);
